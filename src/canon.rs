@@ -32,6 +32,7 @@ impl CanonLabeling {
     pub fn new<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
     where
         Ty: EdgeType,
+        N: Ord + Eq + Clone,
     {
         let mut dg = DenseGraph::from_petgraph(graph);
         let mut opt = canon_opts(graph.is_directed());
@@ -114,6 +115,7 @@ pub fn canon_opts(is_directed: bool) -> optionblk {
     optionblk {
         getcanon: 1,
         digraph: is_directed.into(),
+        defaultptn: 0,
         ..Default::default()
     }
 }
@@ -155,6 +157,7 @@ where
 pub fn canonize<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Graph<(), (), Ty>
 where
     Ty: EdgeType,
+    N: Ord + Eq + Clone,
 {
     let canon = CanonLabeling::new(graph);
     Graph::from(&canon)
@@ -218,6 +221,50 @@ mod testing {
         let l2 = super::CanonLabeling::new(&g2);
 
         assert_ne!(l1, l2);
+    }
+
+    #[test]
+    fn test_unequal_labeled_graph() {
+        let mut g1 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g1.add_node(0);
+        let n1 = g1.add_node(1);
+        let n2 = g1.add_node(0);
+        g1.add_edge(n0, n1, ());
+        g1.add_edge(n1, n2, ());
+
+        let mut g2 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g2.add_node(0);
+        let n1 = g2.add_node(0);
+        let n2 = g2.add_node(1);
+        g2.add_edge(n0, n1, ());
+        g2.add_edge(n1, n2, ());
+
+        let repr_a = super::CanonLabeling::new(&g1);
+        let repr_b = super::CanonLabeling::new(&g2);
+
+        assert_ne!(repr_a, repr_b);
+    }
+
+    #[test]
+    fn test_equal_labeled_graph() {
+        let mut g1 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g1.add_node(1);
+        let n1 = g1.add_node(0);
+        let n2 = g1.add_node(0);
+        g1.add_edge(n0, n1, ());
+        g1.add_edge(n1, n2, ());
+
+        let mut g2 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g2.add_node(0);
+        let n1 = g2.add_node(0);
+        let n2 = g2.add_node(1);
+        g2.add_edge(n0, n1, ());
+        g2.add_edge(n1, n2, ());
+
+        let repr_a = super::CanonLabeling::new(&g1);
+        let repr_b = super::CanonLabeling::new(&g2);
+
+        assert_eq!(repr_a, repr_b);
     }
 
     #[test]

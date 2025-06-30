@@ -1,6 +1,6 @@
 use nauty_Traces_sys::{empty_graph, ADDONEARC, SETWORDSNEEDED};
 use petgraph::{visit::GetAdjacencyMatrix, EdgeType, Graph};
-use std::ffi::c_int;
+use std::{collections::BTreeMap, ffi::c_int, hash::Hash};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct DenseGraph {
@@ -14,11 +14,12 @@ impl DenseGraph {
     pub fn from_petgraph<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
     where
         Ty: EdgeType,
+        N: Ord + Eq + Clone,
     {
         let n = graph.node_count();
         let e = graph.edge_count();
         let m = SETWORDSNEEDED(n);
-        let nodes = Nodes::new(n);
+        let nodes = Nodes::new(graph);
         let mut g = empty_graph(m, n);
         let adj = graph.adjacency_matrix();
         for idx in 0..n {
@@ -43,11 +44,28 @@ pub struct Nodes {
     pub orbits: Vec<c_int>,
 }
 impl Nodes {
-    pub fn new(n: usize) -> Self {
+    pub fn new<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
+    where
+        Ty: EdgeType,
+        N: Ord + Eq + Clone,
+    {
+        let mut buckets = BTreeMap::new();
+        for (ix, weight) in graph.node_weights().enumerate() {
+            let bucket = buckets.entry(weight.clone()).or_insert(vec![]);
+            bucket.push(ix as i32);
+        }
+
+        let mut lab = vec![];
+        let mut ptn = vec![];
+        for (_, bucket) in buckets {
+            ptn.extend(vec![1; bucket.len() - 1]);
+            ptn.push(0);
+            lab.extend(bucket);
+        }
         Self {
-            lab: (0..n as i32).collect(),
-            ptn: vec![0; n],
-            orbits: vec![0; n],
+            lab,
+            ptn,
+            orbits: vec![0; graph.node_count()],
         }
     }
 }
