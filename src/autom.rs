@@ -10,7 +10,7 @@ use crate::{canon::bit_adj_to_graph, dense::Nodes, DenseGraph};
 
 #[repr(C)]
 #[derive(Debug)]
-pub struct AutoGroups {
+pub struct AutoGroups<N> {
     /// The automorphism group of the graph.
     pub data: Vec<Vec<i32>>,
 
@@ -24,10 +24,13 @@ pub struct AutoGroups {
     pub canon: Vec<u64>,
 
     /// The `Nodes` of the graph.
-    pub nodes: Nodes,
+    pub nodes: Nodes<N>,
 }
-impl AutoGroups {
-    pub fn new(n: usize, canon: Vec<u64>, nodes: Nodes) -> Self {
+impl<N> AutoGroups<N>
+where
+    N: Ord + Eq + Clone,
+{
+    pub fn new(n: usize, canon: Vec<u64>, nodes: Nodes<N>) -> Self {
         Self {
             data: Vec::with_capacity(n * 100),
             count: 0,
@@ -37,12 +40,12 @@ impl AutoGroups {
         }
     }
 
-    pub fn from_petgraph<Ty: EdgeType>(graph: &Graph<(), (), Ty>) -> Self {
-        let dense = DenseGraph::from_petgraph(graph);
+    pub fn from_petgraph<Ty: EdgeType>(graph: &Graph<N, (), Ty>) -> Self {
+        let dense = DenseGraph::<N>::from_petgraph(graph);
         Self::from_dense(dense, graph.is_directed())
     }
 
-    pub fn from_dense(mut dense: DenseGraph, is_directed: bool) -> Self {
+    pub fn from_dense(mut dense: DenseGraph<N>, is_directed: bool) -> Self {
         let mut stats = statsblk::default();
         let mut options = autom_opts(is_directed);
         let mut canon = empty_graph(dense.m, dense.n);
@@ -65,8 +68,8 @@ impl AutoGroups {
 
             allgroup3(
                 group,
-                Some(writeautom3),
-                &mut autogroups as *mut AutoGroups as *mut c_void,
+                Some(writeautom3::<N>),
+                &mut autogroups as *mut AutoGroups<N> as *mut c_void,
             );
             autogroups
         }
@@ -104,20 +107,20 @@ fn autom_opts(is_directed: bool) -> optionblk {
     }
 }
 
-impl<Ty> From<AutoGroups> for Graph<(), (), Ty>
+impl<N, Ty> From<AutoGroups<N>> for Graph<(), (), Ty>
 where
     Ty: EdgeType,
 {
-    fn from(ag: AutoGroups) -> Self {
+    fn from(ag: AutoGroups<N>) -> Self {
         bit_adj_to_graph(&ag.canon, ag.n * ag.n, ag.n)
     }
 }
 
-impl<Ty> From<&AutoGroups> for Graph<(), (), Ty>
+impl<N, Ty> From<&AutoGroups<N>> for Graph<(), (), Ty>
 where
     Ty: EdgeType,
 {
-    fn from(ag: &AutoGroups) -> Self {
+    fn from(ag: &AutoGroups<N>) -> Self {
         bit_adj_to_graph(&ag.canon, ag.n * ag.n, ag.n)
     }
 }
@@ -138,11 +141,10 @@ extern "C" {
     );
 }
 
-#[no_mangle]
-extern "C" fn writeautom3(p: *mut i32, n: i32, _abort: *mut i32, userptr: *mut c_void) {
+extern "C" fn writeautom3<N>(p: *mut i32, n: i32, _abort: *mut i32, userptr: *mut c_void) {
     unsafe {
         // convert void pointer to an AutoGroups pointer
-        let autogroups_ptr = userptr as *mut AutoGroups;
+        let autogroups_ptr = userptr as *mut AutoGroups<N>;
 
         // convert the raw pointer to a mutable reference
         let autogroups = &mut *autogroups_ptr;
@@ -158,10 +160,9 @@ extern "C" fn writeautom3(p: *mut i32, n: i32, _abort: *mut i32, userptr: *mut c
 
 #[cfg(test)]
 mod testing {
-    
-    use petgraph::{Directed, Undirected};
-    use super::*;
 
+    use super::*;
+    use petgraph::{Directed, Undirected};
 
     #[test]
     fn autogroups_directed() {
@@ -171,18 +172,14 @@ mod testing {
         let g2 = Graph::<(), (), Directed>::from_edges(&e2);
         let a1 = AutoGroups::from_petgraph(&g1);
         let a2 = AutoGroups::from_petgraph(&g2);
-        let expected_1 = vec![
-                vec![0, 1, 2],
-                vec![1, 2, 0],
-                vec![2, 0, 1],
-        ];
+        let expected_1 = vec![vec![0, 1, 2], vec![1, 2, 0], vec![2, 0, 1]];
         let expected_2 = vec![
-                vec![0, 1, 2],
-                vec![1, 0, 2],
-                vec![2, 0, 1],
-                vec![0, 2, 1],
-                vec![1, 2, 0],
-                vec![2, 1, 0],
+            vec![0, 1, 2],
+            vec![1, 0, 2],
+            vec![2, 0, 1],
+            vec![0, 2, 1],
+            vec![1, 2, 0],
+            vec![2, 1, 0],
         ];
 
         assert_eq!(a1.size(), 3);
@@ -207,12 +204,12 @@ mod testing {
         let a1 = AutoGroups::from_petgraph(&g1);
         let a2 = AutoGroups::from_petgraph(&g2);
         let expected = vec![
-                vec![0, 1, 2],
-                vec![1, 0, 2],
-                vec![2, 0, 1],
-                vec![0, 2, 1],
-                vec![1, 2, 0],
-                vec![2, 1, 0],
+            vec![0, 1, 2],
+            vec![1, 0, 2],
+            vec![2, 0, 1],
+            vec![0, 2, 1],
+            vec![1, 2, 0],
+            vec![2, 1, 0],
         ];
 
         assert_eq!(a1.size(), 6);

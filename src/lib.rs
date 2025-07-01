@@ -57,35 +57,6 @@
 //! assert_ne!(l1, l3);
 //! ```
 //!
-//! ### Recovering the Canonical `Graph`
-//!
-//! If instead you are interested in working with the graph itself,
-//! you can use the `canonize` function to return a new `Graph` object
-//!
-//! #### Directed Graphs
-//! ```
-//! use petgraph::{Directed, Graph};
-//! use graph_canon::canonize;
-//!
-//! let edges = vec![(0, 1), (0, 2), (1, 2)];
-//! let graph = Graph::<(), (), Directed>::from_edges(&edges);
-//! let canon = canonize(&graph);
-//! assert_eq!(canon.edge_count(), 3);
-//! ```
-//!
-//! #### Undirected Graphs
-//! ```
-//! use petgraph::{Undirected, Graph};
-//! use graph_canon::canonize;
-//!
-//! let edges = vec![(0, 1), (0, 2), (1, 2)];
-//! let graph = Graph::<(), (), Undirected>::from_edges(&edges);
-//! let canon = canonize(&graph);
-//!
-//! // There are currently twice as many edges but may change in the future
-//! assert_eq!(canon.edge_count(), 6);
-//! ```
-//!
 //! ### Recovering the automorphism group of a `Graph`
 //!
 //! If you're interested in the automorphism group of a graph, you can use the `autom` module.
@@ -105,5 +76,5 @@
 pub mod autom;
 pub mod canon;
 pub mod dense;
-pub use canon::{canonize, CanonLabeling};
+pub use canon::CanonLabeling;
 pub use dense::DenseGraph;

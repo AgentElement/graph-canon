@@ -8,13 +8,13 @@ use std::{
 };
 
 #[derive(Eq, Debug)]
-pub struct CanonLabeling {
+pub struct CanonLabeling<N> {
     pub g: Vec<u64>,
     pub e: usize,
     pub n: usize,
-    dense: DenseGraph,
+    dense: DenseGraph<N>,
 }
-impl Hash for CanonLabeling {
+impl<N> Hash for CanonLabeling<N> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.g.hash(state);
         self.e.hash(state);
@@ -23,7 +23,7 @@ impl Hash for CanonLabeling {
     }
 }
 
-impl PartialEq for CanonLabeling {
+impl<N> PartialEq for CanonLabeling<N> {
     fn eq(&self, other: &Self) -> bool {
         self.g == other.g
             && self.e == other.e
@@ -32,13 +32,13 @@ impl PartialEq for CanonLabeling {
     }
 }
 
-impl CanonLabeling {
-    pub fn new<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
+impl<N> CanonLabeling<N> {
+    pub fn new<E, Ty>(graph: &Graph<N, E, Ty>) -> Self
     where
         Ty: EdgeType,
         N: Ord + Eq + Clone,
     {
-        let mut dg = DenseGraph::from_petgraph(graph);
+        let mut dg = DenseGraph::<N>::from_petgraph(graph);
         let mut opt = canon_opts(graph.is_directed());
         let mut stat = statsblk::default();
         let mut cg = empty_graph(dg.m, dg.n);
@@ -81,33 +81,6 @@ impl CanonLabeling {
 
     pub fn orbits(&self) -> &[i32] {
         self.dense.orbits()
-    }
-}
-
-impl<Ty> From<&CanonLabeling> for Graph<(), (), Ty>
-where
-    Ty: EdgeType,
-{
-    fn from(cl: &CanonLabeling) -> Self {
-        bit_adj_to_graph(&cl.g, cl.e, cl.n)
-    }
-}
-
-impl<Ty> From<CanonLabeling> for Graph<(), (), Ty>
-where
-    Ty: EdgeType,
-{
-    fn from(cl: CanonLabeling) -> Self {
-        bit_adj_to_graph(&cl.g, cl.e, cl.n)
-    }
-}
-
-impl<T> From<&Graph<(), (), T>> for CanonLabeling
-where
-    T: EdgeType,
-{
-    fn from(graph: &Graph<(), (), T>) -> Self {
-        Self::new(graph)
     }
 }
 
@@ -157,15 +130,6 @@ where
     Graph::from_edges(&edges)
 }
 
-/// Returns a `Graph` with canonically labeled nodes
-pub fn canonize<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Graph<(), (), Ty>
-where
-    Ty: EdgeType,
-    N: Ord + Eq + Clone,
-{
-    let canon = CanonLabeling::new(graph);
-    Graph::from(&canon)
-}
 
 #[cfg(test)]
 mod testing {
@@ -307,7 +271,7 @@ mod testing {
     fn test_flat_adj_directed() {
         let edges = vec![(0, 1), (0, 2), (1, 2)];
         let graph: Graph<(), (), Directed> = Graph::from_edges(&edges);
-        let canon = super::CanonLabeling::new(&graph);
+        let canon = super::CanonLabeling::<()>::new(&graph);
         let flat_adj = canon.flat_adjacency();
         assert_eq!(flat_adj, vec![0, 0, 0, 1, 0, 0, 1, 1, 0]);
     }

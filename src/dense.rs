@@ -3,15 +3,15 @@ use petgraph::{visit::EdgeRef, EdgeType, Graph};
 use std::{collections::BTreeMap, ffi::c_int, hash::Hash};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
-pub struct DenseGraph {
+pub struct DenseGraph<N> {
     pub g: Vec<u64>,
     pub n: usize,
     pub e: usize,
     pub m: usize,
-    pub nodes: Nodes,
+    pub nodes: Nodes<N>,
 }
-impl DenseGraph {
-    pub fn from_petgraph<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
+impl<N> DenseGraph<N> {
+    pub fn from_petgraph<E, Ty>(graph: &Graph<N, E, Ty>) -> Self
     where
         Ty: EdgeType,
         N: Ord + Eq + Clone,
@@ -38,13 +38,15 @@ impl DenseGraph {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash)]
-pub struct Nodes {
+pub struct Nodes<N> {
     pub lab: Vec<c_int>,
     pub ptn: Vec<c_int>,
     pub orbits: Vec<c_int>,
+    weights: Vec<N>,
 }
-impl Nodes {
-    pub fn new<N, E, Ty>(graph: &Graph<N, E, Ty>) -> Self
+
+impl<N> Nodes<N> {
+    pub fn new<E, Ty>(graph: &Graph<N, E, Ty>) -> Self
     where
         Ty: EdgeType,
         N: Ord + Eq + Clone,
@@ -57,15 +59,18 @@ impl Nodes {
 
         let mut lab = vec![];
         let mut ptn = vec![];
-        for (_, bucket) in buckets {
+        let mut weights = vec![];
+        for (weight, bucket) in buckets {
             ptn.extend(vec![1; bucket.len() - 1]);
             ptn.push(0);
             lab.extend(bucket);
+            weights.push(weight)
         }
         Self {
             lab,
             ptn,
             orbits: vec![0; graph.node_count()],
+            weights,
         }
     }
 }
