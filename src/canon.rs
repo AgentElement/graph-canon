@@ -14,21 +14,29 @@ pub struct CanonLabeling<N> {
     pub n: usize,
     dense: DenseGraph<N>,
 }
-impl<N> Hash for CanonLabeling<N> {
+impl<N> Hash for CanonLabeling<N>
+where
+    N: Hash,
+{
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.g.hash(state);
         self.e.hash(state);
         self.n.hash(state);
         self.dense.nodes.ptn.hash(state);
+        self.dense.nodes.weights.hash(state);
     }
 }
 
-impl<N> PartialEq for CanonLabeling<N> {
+impl<N> PartialEq for CanonLabeling<N>
+where
+    N: PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
         self.g == other.g
             && self.e == other.e
             && self.n == other.n
             && self.dense.nodes.ptn == other.dense.nodes.ptn
+            && self.dense.nodes.weights == other.dense.nodes.weights
     }
 }
 
@@ -129,7 +137,6 @@ where
     let edges = bit_adj_to_edgelist(adj, e, n);
     Graph::from_edges(&edges)
 }
-
 
 #[cfg(test)]
 mod testing {

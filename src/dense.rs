@@ -42,7 +42,7 @@ pub struct Nodes<N> {
     pub lab: Vec<c_int>,
     pub ptn: Vec<c_int>,
     pub orbits: Vec<c_int>,
-    weights: Vec<N>,
+    pub weights: Vec<N>,
 }
 
 impl<N> Nodes<N> {
