@@ -1,5 +1,5 @@
 use nauty_Traces_sys::{empty_graph, ADDONEARC, SETWORDSNEEDED};
-use petgraph::{visit::GetAdjacencyMatrix, EdgeType, Graph};
+use petgraph::{visit::EdgeRef, EdgeType, Graph};
 use std::{collections::BTreeMap, ffi::c_int, hash::Hash};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -21,12 +21,12 @@ impl DenseGraph {
         let m = SETWORDSNEEDED(n);
         let nodes = Nodes::new(graph);
         let mut g = empty_graph(m, n);
-        let adj = graph.adjacency_matrix();
-        for idx in 0..n {
-            for jdx in 0..n {
-                if adj.contains(idx * n + jdx) {
-                    ADDONEARC(&mut g, idx, jdx, m)
-                }
+        for edge in graph.edge_references() {
+            let src = edge.source().index();
+            let dst = edge.target().index();
+            ADDONEARC(&mut g, src, dst, m);
+            if !graph.is_directed() {
+                ADDONEARC(&mut g, dst, src, m);
             }
         }
         Self { g, n, e, m, nodes }
@@ -62,6 +62,7 @@ impl Nodes {
             ptn.push(0);
             lab.extend(bucket);
         }
+        println!("{lab:?}\n{ptn:?}");
         Self {
             lab,
             ptn,

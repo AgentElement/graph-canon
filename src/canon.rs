@@ -246,6 +246,28 @@ mod testing {
     }
 
     #[test]
+    fn test_unequal_labeled_graph_again() {
+        let mut g1 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g1.add_node(0);
+        let n1 = g1.add_node(1);
+        let n2 = g1.add_node(0);
+        g1.add_edge(n0, n1, ());
+        g1.add_edge(n1, n2, ());
+
+        let mut g2 = Graph::<u8, (), Undirected>::new_undirected();
+        let n0 = g2.add_node(0);
+        let n1 = g2.add_node(0);
+        let n2 = g2.add_node(0);
+        g2.add_edge(n0, n1, ());
+        g2.add_edge(n1, n2, ());
+
+        let repr_a = super::CanonLabeling::new(&g1);
+        let repr_b = super::CanonLabeling::new(&g2);
+
+        assert_ne!(repr_a, repr_b);
+    }
+
+    #[test]
     fn test_equal_labeled_graph() {
         let mut g1 = Graph::<u8, (), Undirected>::new_undirected();
         let n0 = g1.add_node(1);
