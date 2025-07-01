@@ -62,7 +62,6 @@ impl Nodes {
             ptn.push(0);
             lab.extend(bucket);
         }
-        println!("{lab:?}\n{ptn:?}");
         Self {
             lab,
             ptn,

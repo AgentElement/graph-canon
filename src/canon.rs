@@ -19,12 +19,16 @@ impl Hash for CanonLabeling {
         self.g.hash(state);
         self.e.hash(state);
         self.n.hash(state);
+        self.dense.nodes.ptn.hash(state);
     }
 }
 
 impl PartialEq for CanonLabeling {
     fn eq(&self, other: &Self) -> bool {
-        self.g == other.g && self.e == other.e && self.n == other.n
+        self.g == other.g
+            && self.e == other.e
+            && self.n == other.n
+            && self.dense.nodes.ptn == other.dense.nodes.ptn
     }
 }
 
