@@ -12,8 +12,13 @@ description = "Canonical labelling of graphs using nauty-traces built on petgrap
 
 [dependencies]
 bitvec = "1.0.1"
-nauty-Traces-sys = "0.3.0"
 petgraph = "0.6.3"
+
+[target.'cfg(unix)'.dependencies]
+nauty-Traces-sys = "0.3.0"
+
+[target.'cfg(windows)'.dependencies]
+nauty-Traces-sys = { version = "0.3.0", default-features = false }
 
 [dev-dependencies]
 criterion = "0.3"
