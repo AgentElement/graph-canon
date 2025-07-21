@@ -7,7 +7,7 @@ use std::{
     os::raw::c_int,
 };
 
-#[derive(Eq, Debug)]
+#[derive(Eq, Debug, Clone)]
 pub struct CanonLabeling<N> {
     pub g: Vec<u64>,
     pub e: usize,
@@ -37,6 +37,36 @@ where
             && self.n == other.n
             && self.dense.nodes.ptn == other.dense.nodes.ptn
             && self.dense.nodes.weights == other.dense.nodes.weights
+    }
+}
+
+impl<N> PartialOrd for CanonLabeling<N>
+where
+    N: PartialOrd,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(
+            self.n
+                .cmp(&other.n)
+                .then(self.e.cmp(&other.e))
+                .then(self.g.cmp(&other.g))
+                .then(self.dense.nodes.ptn.partial_cmp(&other.dense.nodes.ptn)?)
+                .then(self.dense.nodes.weights.partial_cmp(&other.dense.nodes.weights)?),
+        )
+    }
+}
+
+impl<N> Ord for CanonLabeling<N>
+where
+    N: Ord,
+{
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.n
+            .cmp(&other.n)
+            .then(self.e.cmp(&other.e))
+            .then(self.g.cmp(&other.g))
+            .then(self.dense.nodes.ptn.cmp(&other.dense.nodes.ptn))
+            .then(self.dense.nodes.weights.cmp(&other.dense.nodes.weights))
     }
 }
 

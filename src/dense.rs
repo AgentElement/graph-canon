@@ -2,7 +2,7 @@ use nauty_Traces_sys::{empty_graph, ADDONEARC, SETWORDSNEEDED};
 use petgraph::{visit::EdgeRef, EdgeType, Graph};
 use std::{collections::BTreeMap, ffi::c_int, hash::Hash};
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct DenseGraph<N> {
     pub g: Vec<u64>,
     pub n: usize,
@@ -37,7 +37,7 @@ impl<N> DenseGraph<N> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct Nodes<N> {
     pub lab: Vec<c_int>,
     pub ptn: Vec<c_int>,
